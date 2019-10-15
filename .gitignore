@@ -1,5 +1,14 @@
+target/
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
 # Compiled class file
 *.class
+
+
 
 # Log file
 *.log
