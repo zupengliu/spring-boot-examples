@@ -14,14 +14,20 @@
 [纯消费(执行Action)](#纯消费(执行Action))
 
 [组合](#组合)
-[纯消费(执行Action)](#纯消费(执行Action))
+
+[AcceptEither 和 applyToEither](#AcceptEither-和-applyToEither)
+
+[allOf 和 anyOf](#allOf-和-anyOf)
 
 ## Future
-    JDK 5引入了Future模式。Future接口是Java多线程Future模式的实现，在java.util.concurrent包中，可以来进行异步计算。
-    
-    Future模式是多线程设计常用的一种设计模式。Future模式可以理解成：我有一个任务，提交给了Future，Future替我完成这个任务。
-    期间我自己可以去做任何想做的事情。一段时间之后，我就便可以从Future那儿取出结果。
-    Future的接口很简单，只有五个方法。
+
+JDK 5引入了Future模式。Future接口是Java多线程Future模式的实现，在java.util.concurrent包中，可以来进行异步计算。
+
+Future模式是多线程设计常用的一种设计模式。Future模式可以理解成：我有一个任务，提交给了Future，Future替我完成这个任务。
+
+期间我自己可以去做任何想做的事情。一段时间之后，我就便可以从Future那儿取出结果。
+
+Future的接口很简单，只有五个方法。
 ```java
 public interface Future<V> {
 
@@ -297,7 +303,7 @@ public void test03_1() {
 ```
 exceptionally方法返回一个新的CompletableFuture，当原始的CompletableFuture抛出异常的时候，就会触发这个CompletableFuture的计算，调用function计算值，否则如果原始的CompletableFuture正常计算完后，这个新的CompletableFuture也计算完成，它的值和原始的CompletableFuture的计算的值相同。也就是这个exceptionally方法用来处理异常的情况。
 
-exceptionally方法的使用方式如下所示：
+### exceptionally方法的使用方式如下所示：
 ```java
 @Test
 public void test05() {
@@ -384,7 +390,7 @@ public <U> CompletableFuture<U> handleAsync(BiFunction<? super T, Throwable, ? e
 ```
 同样，不以Async结尾的方法由原来的线程计算，以Async结尾的方法由默认的线程池ForkJoinPool.commonPool()或者指定的线程池executor运行。
 
-handle方法的使用方式如下所示
+### handle方法的使用方式如下所示
 ```java
 @Test
 public void test06() {
@@ -469,7 +475,8 @@ public <U> CompletableFuture<U> thenApplyAsync(Function<? super T,? extends U> f
 因此它的功能相当于将CompletableFuture<T>转换成CompletableFuture<U>。
 需要注意的是，这些转换并不是马上执行的，也不会阻塞，而是在前一个stage完成后继续执行。
 它们与handle方法的区别在于handle方法会处理正常计算值和异常，因此它可以屏蔽异常，避免异常继续抛出。而thenApply方法只是用来处理正常值，因此一旦有异常就会抛出。
-thenApply方法的使用方式如下：
+
+### thenApply方法的使用方式如下：
 ```java
 @Test
 public void test07() {
@@ -508,7 +515,7 @@ public CompletableFuture<Void> thenAcceptAsync(Consumer<? super T> action, Execu
 ```
 看它的参数类型也就明白了，它们是函数式接口Consumer，这个接口只有输入，没有返回值。
 
-thenAccept方法的使用方式如下：
+### thenAccept方法的使用方式如下：
 ```java
 @Test
 public void test08() {
@@ -537,7 +544,7 @@ public void test08() {
 20:28:31.588 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - hello
 
 ```
-## thenAcceptBoth
+### thenAcceptBoth
 ```java
 public <U> CompletableFuture<Void> thenAcceptBoth(CompletionStage<? extends U> other, BiConsumer<? super T, ? super U> action)
 public <U> CompletableFuture<Void> thenAcceptBothAsync(CompletionStage<? extends U> other, BiConsumer<? super T, ? super U> action)
@@ -580,7 +587,7 @@ public void test09() {
 20:31:40.335 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
 20:31:42.344 [ForkJoinPool.commonPool-worker-2] INFO completable_future.p3.CompletableFutureTest - hello world
 ```
-## runAfterBoth
+### runAfterBoth
 
 ```java
 public CompletableFuture<Void> runAfterBoth(CompletionStage<?> other, Runnable action)
@@ -625,7 +632,7 @@ public void test10() {
 20:34:09.094 [ForkJoinPool.commonPool-worker-2] INFO completable_future.p3.CompletableFutureTest - end
 
 ```
-## thenRun
+### thenRun
 ```java
 public CompletableFuture<Void> thenRun(Runnable action)
 public CompletableFuture<Void> thenRunAsync(Runnable action)
@@ -660,7 +667,7 @@ public void test11() {
 20:36:06.843 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - end
 ```
 ## 组合
-
+### thenCompose
 ```java
 public <U> CompletableFuture<U> thenCompose(Function<? super T, ? extends CompletionStage<U>> fn)
 public <U> CompletableFuture<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn)
@@ -708,7 +715,7 @@ public void test12() {
 20:41:42.255 [main] INFO completable_future.p3.CompletableFutureTest - hello world
 ```
 
-## thenCombine
+### thenCombine
 
 ```java
 public <U,V> CompletableFuture<V> thenCombine(CompletionStage<? extends U> other, BiFunction<? super T,? super U,? extends V> fn)
@@ -853,7 +860,7 @@ public void test15() {
 21:25:44.448 [main] INFO completable_future.p3.CompletableFutureTest - hello end
 ```
 
-allOf 和 anyOf
+## allOf 和 anyOf
 ```java
 public static CompletableFuture<Void> allOf(CompletableFuture<?>... cfs)
 public static CompletableFuture<Object> anyOf(CompletableFuture<?>... cfs)
