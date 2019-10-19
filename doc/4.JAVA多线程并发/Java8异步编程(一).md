@@ -12,10 +12,9 @@
 ## Future
     JDK 5引入了Future模式。Future接口是Java多线程Future模式的实现，在java.util.concurrent包中，可以来进行异步计算。
     
-    Future模式是多线程设计常用的一种设计模式。Future模式可以理解成：我有一个任务，提交给了Future，Future替我完成这个任务。期间我自己可以去做任何想做的事情。一段时间之后，我就便可以从Future那儿取出结果。
-    
+    Future模式是多线程设计常用的一种设计模式。Future模式可以理解成：我有一个任务，提交给了Future，Future替我完成这个任务。
+    期间我自己可以去做任何想做的事情。一段时间之后，我就便可以从Future那儿取出结果。
     Future的接口很简单，只有五个方法。
-
 ```java
 public interface Future<V> {
 
@@ -68,7 +67,7 @@ Future接口的方法介绍如下：
 ```
 比起future.get()，其实更推荐使用get (long timeout, TimeUnit unit) 方法，设置了超时时间可以防止程序无限制的等待future的结果。
 
-##2.CompletableFuture介绍
+## CompletableFuture介绍
 
 ### 2.1 Future模式的缺点
 * Future虽然可以实现获取异步执行结果的需求，但是它没有提供通知的机制，我们无法得知Future什么时候完成。
@@ -83,7 +82,7 @@ CompletableFuture能够将回调放到与任务不同的线程中执行，也能
 
 CompletableFuture弥补了Future模式的缺点。在异步的任务完成后，需要用其结果继续操作时，无需等待。可以直接通过thenAccept、thenApply、thenCompose等方式将前面异步处理的结果交给另外一个异步事件处理线程来处理。
 
-## 3.CompletableFuture特性
+## CompletableFuture特性
 ### 3.1 CompletableFuture的静态工厂方法
 |方法名|	描述|
 |:---| :---|
@@ -149,7 +148,7 @@ future.get()在等待执行结果时，程序会一直block，如果此时调用
     World
     
 可以看到future调用complete(T t)会立即执行。但是complete(T t)只能调用一次，后续的重复调用会失效。
-
 如果future已经执行完毕能够返回结果，此时再调用complete(T t)则会无效。
+
 
 
