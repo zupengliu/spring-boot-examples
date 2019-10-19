@@ -4,16 +4,25 @@
 
 # 目录
 
-    1.[主动完成计算](#主动完成计算)
-    2.创建CompletableFuture对象。
-    3.计算结果完成时的处理
-    4.转换
-    5.纯消费(执行Action)
-    6.组合
-    7.Either
-    8.辅助方法 allOf 和 anyOf
-    9.更进一步
-    10.参考文档
+1.[主动完成计算](#主动完成计算)
+
+2.[创建CompletableFuture对象](#创建CompletableFuture对象)
+
+3.[计算结果完成时的处理](#计算结果完成时的处理)
+
+4.[转换](#转换)
+
+5.[纯消费(执行Action)](#纯消费(执行Action))
+
+6.[组合](#组合)
+
+7.[Either](#Either)
+
+8.[辅助方法 allOf 和 anyOf](#辅助方法-allOf-和-anyOf)
+
+9.[更进一步](#更进一步)
+
+10.[参考文档](#参考文档)
 
 <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html">Future</a>是Java 5添加的类，用来描述一个异步计算的结果。你可以使用isDone方法检查计算是否完成，或者使用get阻塞住调用线程，直到计算完成返回结果，你也可以使用cancel方法停止任务的执行。
 
