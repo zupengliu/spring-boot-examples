@@ -1,7 +1,7 @@
 # java8 异步编程（一）
 
 # 目录
-[1. Future](#1.-Future)
+[Future](#Future)
 
 [2.CompletableFuture介绍](#2.CompletableFuture介绍)
 
@@ -9,7 +9,7 @@
 
 ​				[3.1 CompletableFuture的静态工厂方法](#3.1-CompletableFuture的静态工厂方法)
 
-## 1. Future
+## Future
     JDK 5引入了Future模式。Future接口是Java多线程Future模式的实现，在java.util.concurrent包中，可以来进行异步计算。
     
     Future模式是多线程设计常用的一种设计模式。Future模式可以理解成：我有一个任务，提交给了Future，Future替我完成这个任务。期间我自己可以去做任何想做的事情。一段时间之后，我就便可以从Future那儿取出结果。
@@ -68,7 +68,8 @@ Future接口的方法介绍如下：
 ```
 比起future.get()，其实更推荐使用get (long timeout, TimeUnit unit) 方法，设置了超时时间可以防止程序无限制的等待future的结果。
 
-## 2.CompletableFuture介绍
+##2.CompletableFuture介绍
+
 ### 2.1 Future模式的缺点
 * Future虽然可以实现获取异步执行结果的需求，但是它没有提供通知的机制，我们无法得知Future什么时候完成。
 
