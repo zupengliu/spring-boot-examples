@@ -5,9 +5,11 @@
 
 [CompletableFuture介绍](#CompletableFuture介绍)
 
-   [CompletableFuture特性](#CompletableFuture特性)
+[CompletableFuture特性](#CompletableFuture特性)
 
-​				[CompletableFuture的静态工厂方法](#CompletableFuture的静态工厂方法)
+[计算结果完成时的处理](#计算结果完成时的处理)
+
+[转换](#转换)
 
 ## Future
     JDK 5引入了Future模式。Future接口是Java多线程Future模式的实现，在java.util.concurrent包中，可以来进行异步计算。
@@ -83,45 +85,68 @@ CompletableFuture能够将回调放到与任务不同的线程中执行，也能
 CompletableFuture弥补了Future模式的缺点。在异步的任务完成后，需要用其结果继续操作时，无需等待。可以直接通过thenAccept、thenApply、thenCompose等方式将前面异步处理的结果交给另外一个异步事件处理线程来处理。
 
 ## CompletableFuture特性
-### 3.1 CompletableFuture的静态工厂方法
-|方法名|	描述|
-|:---| :---|
-|runAsync(Runnable runnable) | 使用ForkJoinPool.commonPool()作为它的线程池执行异步代码。|
-|runAsync(Runnable runnable, Executor executor)	| 使用指定的thread pool执行异步代码。|
-|supplyAsync(Supplier<U> supplier)	| 使用ForkJoinPool.commonPool()作为它的线程池执行异步代码，异步操作有返回值|
-|supplyAsync(Supplier<U> supplier, Executor executor)	| 使用指定的thread pool执行异步代码，异步操作有返回值|
+### 3.1 创建CompletableFuture对象
 
+```java
+//使用ForkJoinPool.commonPool()作为它的线程池执行异步代码。
+public static CompletableFuture<Void> runAsync(Runnable runnable)
+//使用指定的thread pool执行异步代码。
+public static CompletableFuture<Void> runAsync(Runnable runnable, Executor executor)
+//使用ForkJoinPool.commonPool()作为它的线程池执行异步代码，异步操作有返回值
+public static <U> CompletableFuture<U> supplyAsync(Supplier<U> supplier)
+//使用指定的thread pool执行异步代码，异步操作有返回值
+public static <U> CompletableFuture<U> supplyAsync(Supplier<U> supplier, Executor executor)
+```
 runAsync 和 supplyAsync 方法的区别是runAsync返回的CompletableFuture是没有返回值的。
 
 ```java
-    CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-        System.out.println("Hello");
+@Test
+public void test02() throws InterruptedException {
+    CompletableFuture<Void> cf = CompletableFuture.runAsync(() -> {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     });
 
-    try {
-        future.get();
-    } catch (InterruptedException e) {
-        e.printStackTrace();
-    } catch (ExecutionException e) {
-        e.printStackTrace();
-    }
-
-    System.out.println("CompletableFuture");
+    logger.info("isDone 1 " + cf.isDone());
+    Thread.sleep(2000);
+    logger.info("isDone 2 " + cf.isDone());
+    logger.info("result {}", cf.join());
+}
+```
+执行结果：
+```java
+17:11:43.143 [main] INFO completable_future.p3.CompletableFutureTest - isDone 1 false
+17:11:45.150 [main] INFO completable_future.p3.CompletableFutureTest - isDone 2 true
+17:11:45.150 [main] INFO completable_future.p3.CompletableFutureTest - result null
 ```
 而supplyAsync返回的CompletableFuture是由返回值的，下面的代码打印了future的返回值。
 
 ```java
-        CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> "Hello");
-
+@Test
+public void test02_1() throws InterruptedException {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
         try {
-            System.out.println(future.get());
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
         }
+        return "hello";
+    });
 
-        System.out.println("CompletableFuture");
+    logger.info("isDone 1 " + cf.isDone());
+    Thread.sleep(2000);
+    logger.info("isDone 2 " + cf.isDone());
+    logger.info("result {}", cf.join());
+}
+```
+执行结果：
+```java
+17:11:52.902 [main] INFO completable_future.p3.CompletableFutureTest - isDone 1 false
+17:11:54.907 [main] INFO completable_future.p3.CompletableFutureTest - isDone 2 true
+17:11:54.907 [main] INFO completable_future.p3.CompletableFutureTest - result hello
 ```
 ### 3.2 Completable
 |方法名|描述|
@@ -143,12 +168,339 @@ future.get()在等待执行结果时，程序会一直block，如果此时调用
             e.printStackTrace();
         }
 ```
-执行结果：
+执行结果：World
 
-    World
-    
 可以看到future调用complete(T t)会立即执行。但是complete(T t)只能调用一次，后续的重复调用会失效。
 如果future已经执行完毕能够返回结果，此时再调用complete(T t)则会无效。
+```java
+    CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> "Hello");
 
+    try {
+        Thread.sleep(5000);
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
 
+    future.complete("World");
 
+    try {
+        System.out.println(future.get());
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    } catch (ExecutionException e) {
+        e.printStackTrace();
+    }
+```
+执行结果： Hello
+
+如果使用completeExceptionally(Throwable ex)则抛出一个异常，而不是一个成功的结果。
+```java
+CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> "Hello");
+
+future.completeExceptionally(new Exception());
+
+try {
+    System.out.println(future.get());
+} catch (InterruptedException e) {
+    e.printStackTrace();
+} catch (ExecutionException e) {
+    e.printStackTrace();
+}
+```
+执行结果：
+```java
+java.util.concurrent.ExecutionException: java.lang.Exception
+...
+```
+## 计算结果完成时的处理
+当CompletableFuture的计算结果完成，或者抛出异常的时候，我们可以执行特定的Action。主要是下面的方法：
+```java
+public CompletableFuture<T> whenComplete(BiConsumer<? super T, ? super Throwable> action)
+public CompletableFuture<T> whenCompleteAsync(BiConsumer<? super T, ? super Throwable> action)
+public CompletableFuture<T> whenCompleteAsync(BiConsumer<? super T, ? super Throwable> action, Executor executor)
+public CompletableFuture<T> exceptionally(Function<Throwable, ? extends T> fn)
+```
+可以看到Action的类型是BiConsumer<? super T, ? super Throwable>，它可以处理正常的计算结果，或者异常情况。
+
+方法不以Async结尾，意味着Action使用相同的线程执行，而Async可能会使用其他的线程去执行（如果使用相同的线程池，也可能会被同一个线程选中执行）。
+
+注意这几个方法都会返回CompletableFuture，当Action执行完毕后它的结果返回原始的CompletableFuture的计算结果或者返回异常。
+
+whenComplete方法的使用方式如下所示：
+```java
+@Test
+public void test03() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+    CompletableFuture<String> cf1 = cf.whenComplete((s, throwable) -> {
+        if (throwable == null) {
+            logger.info(s);
+        }
+    });
+
+    logger.info(cf.join());
+    logger.info(cf1.join());
+}
+```
+执行结果:
+```java
+18:54:03.213 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+18:54:04.220 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - hello
+18:54:04.220 [main] INFO completable_future.p3.CompletableFutureTest - hello
+18:54:04.220 [main] INFO completable_future.p3.CompletableFutureTest - hello
+```
+可以看到，正常情况下whenComplete返回supplyAsync执行的结果。
+
+如果执行过程中抛出异常，whenComplete也可以接收到异常然后处理：
+```java
+@Test
+public void test03_1() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (true) {
+            throw new RuntimeException("exception");
+        }
+        return "hello";
+    });
+    cf.whenComplete((s, throwable) -> {
+        if (throwable == null) {
+            logger.info(s);
+        } else {
+            logger.error(throwable.getMessage());
+        }
+    });
+
+    while (!cf.isDone()) {}
+}
+```
+执行结果如下：
+```java
+18:15:30.632 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+18:15:31.635 [ForkJoinPool.commonPool-worker-1] ERROR completable_future.p3.CompletableFutureTest - java.lang.RuntimeException: exception
+```
+exceptionally方法返回一个新的CompletableFuture，当原始的CompletableFuture抛出异常的时候，就会触发这个CompletableFuture的计算，调用function计算值，否则如果原始的CompletableFuture正常计算完后，这个新的CompletableFuture也计算完成，它的值和原始的CompletableFuture的计算的值相同。也就是这个exceptionally方法用来处理异常的情况。
+
+exceptionally方法的使用方式如下所示：
+```java
+@Test
+public void test05() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (true) {
+            throw new RuntimeException("exception");
+        }
+        return "hello";
+    });
+    cf.whenComplete((s, throwable) -> {
+        if (throwable == null) {
+            logger.info(s);
+        } else {
+            logger.error(throwable.getMessage());
+        }
+    });
+    CompletableFuture<String> cf1 = cf.exceptionally(throwable -> {
+        logger.error(throwable.getMessage());
+        return "exception happened";
+    });
+
+    logger.info(cf1.join());
+}
+```
+执行结果如下:
+```java
+18:38:31.461 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+18:38:32.467 [ForkJoinPool.commonPool-worker-1] ERROR completable_future.p3.CompletableFutureTest - java.lang.RuntimeException: exception
+18:38:32.467 [ForkJoinPool.commonPool-worker-1] ERROR completable_future.p3.CompletableFutureTest - java.lang.RuntimeException: exception
+18:38:32.467 [main] INFO completable_future.p3.CompletableFutureTest - exception happened
+```
+可以看到，当执行过程抛出异常时，会触发exceptionally的执行，并返回exceptionally的返回值。
+
+如果执行过程中没有抛出异常：
+```java
+@Test
+public void test05() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+    cf.whenComplete((s, throwable) -> {
+        if (throwable == null) {
+            logger.info(s);
+        } else {
+            logger.error(throwable.getMessage());
+        }
+    });
+    CompletableFuture<String> cf1 = cf.exceptionally(throwable -> {
+        logger.error(throwable.getMessage());
+        return "exception happened";
+    });
+
+    logger.info(cf1.join());
+}
+```
+执行结果：
+```java
+18:42:55.469 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+18:42:56.476 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - hello
+18:42:56.476 [main] INFO completable_future.p3.CompletableFutureTest - hello
+```
+可以看到，如果执行过程中没有抛出异常exceptionally不会触发，它返回的值就是supplyAsync执行返回的原始值。
+
+下面一组方法虽然也返回CompletableFuture对象，但是对象的值和原来的CompletableFuture计算的值不同。当原先的CompletableFuture的值计算完成或者抛出异常的时候，会触发这个CompletableFuture对象的计算，结果由BiFunction参数计算而得。因此这组方法兼有whenComplete和转换的两个功能。
+
+```java
+
+public <U> CompletableFuture<U> handle(BiFunction<? super T, Throwable, ? extends U> fn)
+public <U> CompletableFuture<U> handleAsync(BiFunction<? super T, Throwable, ? extends U> fn)
+public <U> CompletableFuture<U> handleAsync(BiFunction<? super T, Throwable, ? extends U> fn, Executor executor)
+
+```
+同样，不以Async结尾的方法由原来的线程计算，以Async结尾的方法由默认的线程池ForkJoinPool.commonPool()或者指定的线程池executor运行。
+
+handle方法的使用方式如下所示
+```java
+@Test
+public void test06() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+    CompletableFuture<String> cf1 = cf.handle((s, throwable) -> {
+        if (throwable == null) {
+            logger.info(s);
+            return s + " world";
+        } else {
+            logger.error(throwable.getMessage());
+            return "exception happened";
+        }
+
+    });
+
+    logger.info(cf1.join());
+}
+```
+执行结果如下：
+```java
+18:47:03.524 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+18:47:04.529 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - hello
+18:47:04.530 [main] INFO completable_future.p3.CompletableFutureTest - hello world
+```
+如果执行过程抛出异常：
+```java
+@Test
+public void test06() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (true) {
+            throw new RuntimeException("exception");
+        }
+        return "hello";
+    });
+    CompletableFuture<String> cf1 = cf.handle((s, throwable) -> {
+        if (throwable == null) {
+            logger.info(s);
+            return s + " world";
+        } else {
+            logger.error(throwable.getMessage());
+            return "exception happened";
+        }
+
+    });
+
+    logger.info(cf1.join());
+}
+```
+执行结果如下：
+```java
+18:48:25.769 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+18:48:26.775 [ForkJoinPool.commonPool-worker-1] ERROR completable_future.p3.CompletableFutureTest - java.lang.RuntimeException: exception
+18:48:26.776 [main] INFO completable_future.p3.CompletableFutureTest - exception happened
+```
+可以看到，handle方法接收执行结果和异常，处理之后返回新的结果。
+
+## 转换
+CompletableFuture可以作为monad和functor。由于回调风格的实现，我们不必因为等待一个计算完成而阻塞着调用线程，而是告诉CompletableFuture当计算完成的时候请执行某个function。而且我们还可以将这些操作串联起来，或者将CompletableFunction组合起来。
+
+```java
+public <U> CompletableFuture<U> thenApply(Function<? super T,? extends U> fn)
+public <U> CompletableFuture<U> thenApplyAsync(Function<? super T,? extends U> fn)
+public <U> CompletableFuture<U> thenApplyAsync(Function<? super T,? extends U> fn, Executor executor)
+
+```
+这一组函数的功能是当原来的CompletableFuture计算完后，将结果传递给函数fn，将fn的结果作为新的CompletableFuture计算结果。因此它的功能相当于将CompletableFuture<T>转换成CompletableFuture<U>。
+
+需要注意的是，这些转换并不是马上执行的，也不会阻塞，而是在前一个stage完成后继续执行。
+
+它们与handle方法的区别在于handle方法会处理正常计算值和异常，因此它可以屏蔽异常，避免异常继续抛出。而thenApply方法只是用来处理正常值，因此一旦有异常就会抛出。
+thenApply方法的使用方式如下：
+```java
+@Test
+public void test07() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+    CompletableFuture<String> cf1 = cf.thenApply(new Function<String, String>() {
+        @Override
+        public String apply(String s) {
+            logger.info(s);
+            return s + " world";
+        }
+    });
+
+    logger.info(cf1.join());
+}
+```
+执行结果如下：
+```java
+20:22:24.537 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+20:22:25.542 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - hello
+20:22:25.543 [main] INFO completable_future.p3.CompletableFutureTest - hello world
+```
+## 纯消费(执行Action)
+上面的方法是当计算完成的时候，会生成新的计算结果（thenApply, handle），或者返回同样的计算结果whenComplete。CompletableFuture还提供了一种处理结果的方法，只对结果执行Action，而不返回新的计算值。因此计算值为Void：
+```java
+public CompletableFuture<Void> thenAccept(Consumer<? super T> action)
+public CompletableFuture<Void> thenAcceptAsync(Consumer<? super T> action)
+public CompletableFuture<Void> thenAcceptAsync(Consumer<? super T> action, Executor executor)
+```
+看它的参数类型也就明白了，它们是函数式接口Consumer，这个接口只有输入，没有返回值。
+
+thenAccept方法的使用方式如下：
