@@ -1,4 +1,4 @@
-# java8 异步编程（一）
+# java8 异步编程实战（一）
 
 # 目录
 [Future](#Future)
@@ -457,12 +457,12 @@ CompletableFuture可以作为monad和functor。由于回调风格的实现，我
 public <U> CompletableFuture<U> thenApply(Function<? super T,? extends U> fn)
 public <U> CompletableFuture<U> thenApplyAsync(Function<? super T,? extends U> fn)
 public <U> CompletableFuture<U> thenApplyAsync(Function<? super T,? extends U> fn, Executor executor)
-
 ```
-这一组函数的功能是当原来的CompletableFuture计算完后，将结果传递给函数fn，将fn的结果作为新的CompletableFuture计算结果。因此它的功能相当于将CompletableFuture<T>转换成CompletableFuture<U>。
 
+这一组函数的功能是当原来的CompletableFuture计算完后，将结果传递给函数fn，将fn的结果作为新的CompletableFuture计算果。
+
+因此它的功能相当于将CompletableFuture<T>转换成CompletableFuture<U>。
 需要注意的是，这些转换并不是马上执行的，也不会阻塞，而是在前一个stage完成后继续执行。
-
 它们与handle方法的区别在于handle方法会处理正常计算值和异常，因此它可以屏蔽异常，避免异常继续抛出。而thenApply方法只是用来处理正常值，因此一旦有异常就会抛出。
 thenApply方法的使用方式如下：
 ```java
@@ -504,3 +504,433 @@ public CompletableFuture<Void> thenAcceptAsync(Consumer<? super T> action, Execu
 看它的参数类型也就明白了，它们是函数式接口Consumer，这个接口只有输入，没有返回值。
 
 thenAccept方法的使用方式如下：
+```java
+@Test
+public void test08() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+    cf.thenAccept(new Consumer<String>() {
+        @Override
+        public void accept(String s) {
+            logger.info(s);
+        }
+    });
+
+    cf.join();
+}
+```
+执行结果如下:
+```java
+20:28:30.580 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+20:28:31.588 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - hello
+
+```
+## thenAcceptBoth
+```java
+public <U> CompletableFuture<Void> thenAcceptBoth(CompletionStage<? extends U> other, BiConsumer<? super T, ? super U> action)
+public <U> CompletableFuture<Void> thenAcceptBothAsync(CompletionStage<? extends U> other, BiConsumer<? super T, ? super U> action)
+public <U> CompletableFuture<Void> thenAcceptBothAsync(CompletionStage<? extends U> other, BiConsumer<? super T, ? super U> action, Executor executor)
+
+```
+thenAcceptBoth接收另一个CompletionStage和action，当两个CompletionStage都正常完成计算后，就会执行提供的action，它用来组合另外一个异步的结果。
+
+thenAcceptBoth方法的使用方式如下：
+```java
+@Test
+public void test09() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+    CompletableFuture<String> cf1 = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "world";
+    });
+
+    cf.thenAcceptBoth(cf1, (s, s2) -> {
+        logger.info(s + " " + s2);
+    }).join();
+}
+```
+执行结果如下：
+```java
+20:31:40.335 [ForkJoinPool.commonPool-worker-2] INFO completable_future.p3.CompletableFutureTest - start
+20:31:40.335 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+20:31:42.344 [ForkJoinPool.commonPool-worker-2] INFO completable_future.p3.CompletableFutureTest - hello world
+```
+## runAfterBoth
+
+```java
+public CompletableFuture<Void> runAfterBoth(CompletionStage<?> other, Runnable action)
+public CompletableFuture<Void> runAfterBothAsync(CompletionStage<?> other, Runnable action)
+public CompletableFuture<Void> runAfterBothAsync(CompletionStage<?> other, Runnable action, Executor executor)
+
+```
+runAfterBoth是当两个CompletionStage都正常完成计算的时候，执行一个Runnable，这个Runnable并不使用计算的结果。
+
+runAfterBoth方法的使用方式如下：
+```java
+@Test
+public void test10() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+    CompletableFuture<String> cf1 = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "world";
+    });
+
+    cf.runAfterBoth(cf1, () -> {
+        logger.info("end");
+    }).join();
+}
+```
+执行结果如下：
+```java
+20:34:07.085 [ForkJoinPool.commonPool-worker-2] INFO completable_future.p3.CompletableFutureTest - start
+20:34:07.085 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+20:34:09.094 [ForkJoinPool.commonPool-worker-2] INFO completable_future.p3.CompletableFutureTest - end
+
+```
+## thenRun
+```java
+public CompletableFuture<Void> thenRun(Runnable action)
+public CompletableFuture<Void> thenRunAsync(Runnable action)
+public CompletableFuture<Void> thenRunAsync(Runnable action, Executor executor)
+
+```
+
+thenRun当计算完成的时候会执行一个Runnable，与thenAccept不同，Runnable并不使用CompletableFuture计算的结果。
+
+因此先前的CompletableFuture计算的结果被忽略，返回Completable<Void>类型的对象。
+
+thenRun方法的使用方式如下：
+```java
+@Test
+public void test11() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+
+    cf.thenRun(() -> logger.info("end")).join();
+}
+```
+执行结果如下：
+```java
+20:36:05.833 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+20:36:06.843 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - end
+```
+## 组合
+
+```java
+public <U> CompletableFuture<U> thenCompose(Function<? super T, ? extends CompletionStage<U>> fn)
+public <U> CompletableFuture<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn)
+public <U> CompletableFuture<U> thenComposeAsync(Function<? super T, ? extends CompletionStage<U>> fn, Executor executor)
+
+```
+这一组方法接受一个Function作为参数，这个Function的输入是当前的CompletableFuture的计算值，返回结果将是一个新的CompletableFuture，这个新的CompletableFuture会组合原来的CompletableFuture和函数返回的CompletableFuture。因此它的功能类似于： **A +--> B +---> C**
+
+thenCompose返回的对象并不一定是函数fn返回的对象，如果原来的CompletableFuture还没有计算出来，它就会生成一个新的组合后的CompletableFuture。
+
+thenCompose方法的使用方式如下：
+```java
+@Test
+public void test12() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+    CompletableFuture<String> cf2 = cf.thenCompose(new Function<String, CompletionStage<String>>() {
+        @Override
+        public CompletionStage<String> apply(String s) {
+            return CompletableFuture.supplyAsync(() -> {
+                logger.info(s);
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return s + " world";
+            });
+        }
+    });
+    logger.info(cf2.join());
+}
+```
+执行结果如下:
+```java
+20:41:39.242 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+20:41:40.253 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - hello
+20:41:42.255 [main] INFO completable_future.p3.CompletableFutureTest - hello world
+```
+
+## thenCombine
+
+```java
+public <U,V> CompletableFuture<V> thenCombine(CompletionStage<? extends U> other, BiFunction<? super T,? super U,? extends V> fn)
+public <U,V> CompletableFuture<V> thenCombineAsync(CompletionStage<? extends U> other, BiFunction<? super T,? super U,? extends V> fn)
+public <U,V> CompletableFuture<V> thenCombineAsync(CompletionStage<? extends U> other, BiFunction<? super T,? super U,? extends V> fn, Executor executor)
+
+```
+thenCombine用来复合另外一个CompletionStage的结果，它的功能类似：
+```java
+A +
+  |
+  +------> C
+  +------^
+B +
+```
+两个CompletionStage是并行执行的，他们之间没有先后依赖顺序，other并不会等待先前的CompletableFuture执行完毕后再执行。
+
+从功能上来讲，它们的功能更类似thenAcceptBoth，只不过thenAcceptBoth是纯消费，它的函数参数没有返回值，而thenCombine的函数参数fn有返回值。
+
+thenCombine方法的使用方式如下：
+
+```java
+@Test
+public void test13() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+    CompletableFuture<String> cf1 = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "world";
+    });
+
+    CompletableFuture<String> cf2 = cf.thenCombine(cf1, (s, s2) -> s + " " + s2);
+    logger.info(cf2.join());
+}
+```
+执行结果如下：
+```java
+20:45:01.018 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+20:45:01.018 [ForkJoinPool.commonPool-worker-2] INFO completable_future.p3.CompletableFutureTest - start
+20:45:03.028 [main] INFO completable_future.p3.CompletableFutureTest - hello world
+```
+## AcceptEither 和 applyToEither
+thenAcceptBoth和runAfterBoth是当两个CompletableFuture都计算完成，而下面的方法是当任意一个CompletableFuture计算完成的时候就会执行。
+```java
+public CompletableFuture<Void> acceptEither(CompletionStage<? extends T> other, Consumer<? super T> action)
+public CompletableFuture<Void> acceptEitherAsync(CompletionStage<? extends T> other, Consumer<? super T> action)
+public CompletableFuture<Void> acceptEitherAsync(CompletionStage<? extends T> other, Consumer<? super T> action, Executor executor)
+
+public <U> CompletableFuture<U> applyToEither(CompletionStage<? extends T> other, Function<? super T, U> fn)
+public <U> CompletableFuture<U> applyToEitherAsync(CompletionStage<? extends T> other, Function<? super T, U> fn)
+public <U> CompletableFuture<U> applyToEitherAsync(CompletionStage<? extends T> other, Function<? super T, U> fn, Executor executor)
+
+```
+acceptEither方法是当任意一个CompletionStage完成的时候，action这个消费者就会被执行。这个方法返回CompletableFuture<Void>
+
+applyToEither方法是当任意一个CompletionStage完成的时候，fn会被执行，它的返回值会当做新的CompletableFuture<U>的计算结果
+
+
+acceptEither方法的使用方式如下：
+```java
+@Test
+public void test14() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+    CompletableFuture<String> cf1 = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "world";
+    });
+
+    cf.acceptEither(cf1, s -> logger.info(s)).join();
+}
+```
+执行结果如下：
+```java
+21:21:36.031 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+21:21:36.031 [ForkJoinPool.commonPool-worker-2] INFO completable_future.p3.CompletableFutureTest - start
+21:21:37.039 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - hello
+
+```
+可以看到，当cf执行完毕后，acceptEither方法就被触发执行了
+
+applyToEither方法的使用方式如下：
+
+```java
+@Test
+public void test15() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+    CompletableFuture<String> cf1 = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "world";
+    });
+
+    CompletableFuture<String> cf2 = cf.applyToEither(cf1, s -> {
+        logger.info(s);
+        return s + " end";
+    });
+    logger.info(cf2.join());
+}
+```
+执行结果如下：
+```java
+21:25:43.441 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+21:25:43.441 [ForkJoinPool.commonPool-worker-2] INFO completable_future.p3.CompletableFutureTest - start
+21:25:44.447 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - hello
+21:25:44.448 [main] INFO completable_future.p3.CompletableFutureTest - hello end
+```
+
+allOf 和 anyOf
+```java
+public static CompletableFuture<Void> allOf(CompletableFuture<?>... cfs)
+public static CompletableFuture<Object> anyOf(CompletableFuture<?>... cfs)
+
+```
+allOf方法是当所有的CompletableFuture都执行完后执行计算
+
+anyOf方法是当任意一个CompletableFuture执行完后就会执行计算，计算的结果相同
+
+anyOf和applyToEither不同，anyOf接受任意多的CompletableFuture但是applyToEither只是判断两个CompletableFuture。
+anyOf返回值的计算结果是参数中其中一个CompletableFuture的计算结果，applyToEither返回值的计算结果却是要经过fn处理的。当然还有静态方法的区别，线程池的选择等。
+
+### allOf方法的使用方式如下：
+```java
+@Test
+public void test16() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+    CompletableFuture<String> cf1 = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "world";
+    });
+
+    CompletableFuture.allOf(cf, cf1).whenComplete((v, throwable) -> {
+        List<String> list = new ArrayList<>();
+        list.add(cf.join());
+        list.add(cf1.join());
+        logger.info("result {}", list);
+    }).join();
+}
+```
+执行结果如下：
+
+```java
+21:36:36.938 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+21:36:36.938 [ForkJoinPool.commonPool-worker-2] INFO completable_future.p3.CompletableFutureTest - start
+21:36:38.951 [ForkJoinPool.commonPool-worker-2] INFO completable_future.p3.CompletableFutureTest - result [hello, world]
+
+```
+### anyOf方法的使用方式如下：
+```java
+@Test
+public void test17() {
+    CompletableFuture<String> cf = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "hello";
+    });
+    CompletableFuture<String> cf1 = CompletableFuture.supplyAsync(() -> {
+        logger.info("start");
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "world";
+    });
+
+    CompletableFuture<Object> cf2 = CompletableFuture.anyOf(cf, cf1).whenComplete((o, throwable) -> logger.info("result {}", o));
+    logger.info("result {}", cf2.join());
+}
+```
+执行结果如下：
+```java
+21:43:12.562 [ForkJoinPool.commonPool-worker-2] INFO completable_future.p3.CompletableFutureTest - start
+21:43:12.562 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - start
+21:43:13.573 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - result hello
+21:43:13.576 [main] INFO completable_future.p3.CompletableFutureTest - result hello
+```

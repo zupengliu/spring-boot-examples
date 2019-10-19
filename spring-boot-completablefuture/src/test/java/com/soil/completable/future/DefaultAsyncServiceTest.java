@@ -54,14 +54,14 @@ public class DefaultAsyncServiceTest {
     public void asyncException()throws ExecutionException ,InterruptedException{
         CompletableFuture<Integer> future = CompletableFuture.supplyAsync(()->{
             //方案1
-            try {
+            /*try {
                 return defaultAsyncService.caleException(5);
             } catch (Exception e) {
                 log.error("【测试异常】>>>",e);
                 return 0;
-            }
+            }*/
             //方案2
-//            return defaultAsyncService.caleException(5);
+            return defaultAsyncService.caleException(5);
         }).exceptionally(ex->{
             log.error("【计算出现异常】{}",ex);
             return 0;
