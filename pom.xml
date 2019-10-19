@@ -19,6 +19,12 @@
         <spring-cloud.version>Hoxton.M3</spring-cloud.version>
     </properties>
 
+    <modules>
+        <module>spring-boot-async</module>
+        <module>spring-boot-completablefuture</module>
+        <module>spring-boot-utils</module>
+    </modules>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
