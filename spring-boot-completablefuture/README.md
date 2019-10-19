@@ -1,11 +1,10 @@
-#Java CompletableFuture 详解
+# Java CompletableFuture 详解
+
     Java 8 强大的函数式异步编程辅助类
 
-#目录
-```
-[TOC]
+# 索引
 
-1.主动完成计算(#主动完成计算)
+1.[主动完成计算](#主动完成计算)
 2.创建CompletableFuture对象。
 3.计算结果完成时的处理
 4.转换
@@ -15,8 +14,6 @@
 8.辅助方法 allOf 和 anyOf
 9.更进一步
 10.参考文档
-```
-
 
 <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html">Future</a>是Java 5添加的类，用来描述一个异步计算的结果。你可以使用isDone方法检查计算是否完成，或者使用get阻塞住调用线程，直到计算完成返回结果，你也可以使用cancel方法停止任务的执行。
 
@@ -78,4 +75,4 @@ Scala也提供了简单易用且功能强大的Future/Promise异步编程模式�
 
 下面我们就看一看它的功能吧。
 
-##主动完成计算
+## 主动完成计算
