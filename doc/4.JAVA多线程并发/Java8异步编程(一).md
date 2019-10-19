@@ -3,11 +3,11 @@
 # 目录
 [Future](#Future)
 
-[2.CompletableFuture介绍](#2.CompletableFuture介绍)
+[CompletableFuture介绍](#CompletableFuture介绍)
 
-[3.CompletableFuture特性](#3.CompletableFuture特性)
+   [CompletableFuture特性](#CompletableFuture特性)
 
-​				[3.1 CompletableFuture的静态工厂方法](#3.1-CompletableFuture的静态工厂方法)
+​				[CompletableFuture的静态工厂方法](#CompletableFuture的静态工厂方法)
 
 ## Future
     JDK 5引入了Future模式。Future接口是Java多线程Future模式的实现，在java.util.concurrent包中，可以来进行异步计算。
