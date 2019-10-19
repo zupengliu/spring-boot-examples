@@ -5,7 +5,7 @@
 ```
 [TOC]
 
-1.<a href="#CF1" target="_self"/>主动完成计算
+1.主动完成计算(#主动完成计算)
 2.创建CompletableFuture对象。
 3.计算结果完成时的处理
 4.转换
