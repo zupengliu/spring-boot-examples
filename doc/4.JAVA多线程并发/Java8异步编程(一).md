@@ -11,6 +11,11 @@
 
 [转换](#转换)
 
+[纯消费(执行Action)](#纯消费(执行Action))
+
+[组合](#组合)
+[纯消费(执行Action)](#纯消费(执行Action))
+
 ## Future
     JDK 5引入了Future模式。Future接口是Java多线程Future模式的实现，在java.util.concurrent包中，可以来进行异步计算。
     
@@ -226,7 +231,7 @@ public CompletableFuture<T> exceptionally(Function<Throwable, ? extends T> fn)
 
 注意这几个方法都会返回CompletableFuture，当Action执行完毕后它的结果返回原始的CompletableFuture的计算结果或者返回异常。
 
-whenComplete方法的使用方式如下所示：
+### whenComplete方法的使用方式如下所示：
 ```java
 @Test
 public void test03() {
