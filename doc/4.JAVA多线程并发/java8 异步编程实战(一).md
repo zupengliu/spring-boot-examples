@@ -19,6 +19,7 @@
 
 [allOf 和 anyOf](#allOf-和-anyOf)
 
+[参考文档](#参考文档)
 ## Future
 
 JDK 5引入了Future模式。Future接口是Java多线程Future模式的实现，在java.util.concurrent包中，可以来进行异步计算。
@@ -946,3 +947,9 @@ public void test17() {
 21:43:13.573 [ForkJoinPool.commonPool-worker-1] INFO completable_future.p3.CompletableFutureTest - result hello
 21:43:13.576 [main] INFO completable_future.p3.CompletableFutureTest - result hello
 ```
+## 参考文档
+1.[CompletableFuture | commonPool vs 自定义线程池](http://songkun.me/2018/12/03/2018-12-3-java-completablfuture-drawbacks/)
+
+2.[Java8 增强的Future:CompletableFuture](https://my.oschina.net/u/3703858/blog/1799785)
+
+3.[Java 8 CompletableFuture 教程](https://segmentfault.com/a/1190000014479792)
