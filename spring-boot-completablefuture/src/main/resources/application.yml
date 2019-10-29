@@ -1,1 +1,10 @@
+## ThreadPoolTaskExecutor  重置springboot 默认线程池参数
+#线程池配置参数
+soil:
+  thread:
+    pool:
+      core-pool-size: 5 #设置核心线程数
+      max-pool-size: 20  #设置最大线程数
+      keep-alive-seconds: 300 #设置线程活跃时间（秒）
+      queue-capacity: 50 #设置队列容量
 
