@@ -145,6 +145,10 @@ JDK1.8中CompletableFuture继承自Future接口，通过get()方法也能获取�
 ## 4.测试验证
 
 SpringBoot服务起来后，请求聚合搜索接口，可以看到接口的入口处打印了的NIO线程号——[nio-8080-exec-2]，后面分别从线程池中取了ecutor-thread-1、2、3、4等四个线程来进行了异步搜索操作：
-![image](https://github.com/zupengliu/spring-boot-examples/tree/master/doc/img/8926909-e29bf623212a236d.png)
+
 
 在代码中由于是执行完成后才打印的时间，所以搜索查询的耗时有大有小，而且是先完成的先打印，耗时较长的则靠后，直到最后一个查询完成后，整个聚合搜索才算完毕，输出了查询结果。
+
+## 5.参考地址
+
+[springboot异步编程](https://www.jianshu.com/p/2ea0df29a65e)
